@@ -26,18 +26,18 @@ onValue(positionRef, (snapshot) => {
 
 function updateUI(position) {
   document.getElementById('score').textContent = position;
-  const cup = document.getElementById('cup');
+  const heart = document.getElementById('heart');
   const fillHer = document.getElementById('fillHer');
   const fillMe = document.getElementById('fillMe');
 
-  const cupPercent = ((position + 100) / 200) * 100;
-  cup.style.top = `${cupPercent}%`;
+  const heartPercent = ((position + 100) / 200) * 100;
+  heart.style.top = `${heartPercent}%`;
 
-  const herPercent = Math.min(100, (position + 100) / 2);
-  const mePercent = Math.min(100, 100 - herPercent);
+  const herHeight = Math.min(100, (position + 100) / 2);
+  const meHeight = Math.min(100, 100 - herHeight);
 
-  fillHer.style.height = `${herPercent}%`;
-  fillMe.style.height = `${mePercent}%`;
+  fillHer.style.height = `${herHeight}%`;
+  fillMe.style.height = `${meHeight}%`;
 }
 
 document.getElementById('myPoint').addEventListener('click', () => {
