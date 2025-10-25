@@ -1,0 +1,67 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+}
+.container {
+  max-width: 400px;
+  margin: 0 auto;
+  background: rgba(255,255,255,0.1);
+  padding: 20px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+.bar-container {
+  position: relative;
+  width: 80px;
+  height: 400px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 40px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.fill-her {
+  position: absolute;
+  bottom: 50%;
+  width: 100%;
+  background: #ff6b9d;
+  transition: height 0.4s ease;
+}
+.fill-me {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  background: #4a90e2;
+  transition: height 0.4s ease;
+}
+.cup {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 48px;
+  z-index: 10;
+  transition: top 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.score { font-size: 32px; font-weight: bold; margin: 10px 0; }
+.buttons { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+button {
+  padding: 16px;
+  font-size: 18px;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+button:active { transform: scale(0.95); }
+#myPoint { background: #4a90e2; }
+#herPoint { background: #ff6b9d; }
+#reset { background: #ff4757; }
+.label { margin: 15px 0 5px; font-size: 16px; opacity: 0.9; }
