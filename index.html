@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Наши баллы</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Наши баллы</h1>
+    <div class="score" id="score">0</div>
+
+    <div class="bar-container">
+      <div class="fill-her" id="fillHer"></div>
+      <div class="fill-me" id="fillMe"></div>
+      <div class="cup" id="cup">Кубок</div>
+    </div>
+
+    <div class="buttons">
+      <div class="label">Ты (+1 тебе — вниз)</div>
+      <button id="myPoint">+1 мне!</button>
+
+      <div class="label">Она (+1 ей — вверх)</div>
+      <button id="herPoint">+1 ей!</button>
+
+      <button id="reset">Сбросить</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
