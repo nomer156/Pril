@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Мы — цели и баллы</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','system-ui','Segoe UI','Roboto','Arial'] },
+          boxShadow: { soft: '0 6px 30px rgba(0,0,0,.08)' }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E❤️%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+  <div class="min-h-screen flex flex-col">
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+      <div class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-9 w-9 grid place-items-center rounded-2xl bg-sky-500 text-white shadow-soft">❤️</div>
+          <div class="font-semibold">Мы</div>
+        </div>
+        <button id="open-settings" class="px-3 py-1.5 text-sm rounded-xl border border-slate-300 hover:bg-slate-100">Настройки</button>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6 grid gap-6">
+      <section id="score-section" class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-soft p-6">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-slate-500 text-sm" id="label-you">Ты</div>
+            <button data-target="you" class="btn-add-point px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">+1</button>
+          </div>
+          <div class="text-5xl font-bold tracking-tight"><span id="score-you">0</span></div>
+          <div class="mt-4 flex items-center gap-2">
+            <button data-target="you" data-delta="1" class="btn-delta px-3 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600">+1</button>
+            <button data-target="you" data-delta="-1" class="btn-delta px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300">-1</button>
+            <input id="custom-you" type="number" inputmode="numeric" placeholder="+/-число" class="w-28 rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" />
+            <button data-target="you" id="apply-you" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-100">OK</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-soft p-6">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-slate-500 text-sm" id="label-her">Она</div>
+            <button data-target="her" class="btn-add-point px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">+1</button>
+          </div>
+          <div class="text-5xl font-bold tracking-tight"><span id="score-her">0</span></div>
+          <div class="mt-4 flex items-center gap-2">
+            <button data-target="her" data-delta="1" class="btn-delta px-3 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600">+1</button>
+            <button data-target="her" data-delta="-1" class="btn-delta px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300">-1</button>
+            <input id="custom-her" type="number" inputmode="numeric" placeholder="+/-число" class="w-28 rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" />
+            <button data-target="her" id="apply-her" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-100">OK</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="flex flex-wrap gap-3">
+        <button id="open-add-goal" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-sky-500 text-white hover:bg-sky-600 shadow-soft">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M11 11V5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6z"/></svg>
+          Добавить цель
+        </button>
+        <button id="reset-scores" class="px-4 py-2 rounded-2xl border border-rose-300 text-rose-600 hover:bg-rose-50">Сбросить баллы</button>
+        <button id="clear-completed" class="px-4 py-2 rounded-2xl border border-slate-300 hover:bg-slate-100">Очистить выполненные</button>
+      </section>
+
+      <section class="grid gap-3" id="goals-list"></section>
+
+      <section class="bg-white rounded-2xl shadow-soft p-6" id="history-card">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">История</h3>
+          <button id="clear-history" class="text-sm px-3 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100">Очистить</button>
+        </div>
+        <div id="history" class="mt-4 space-y-2 text-sm text-slate-700"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Модалка новой цели -->
+  <dialog id="goal-modal" class="rounded-2xl p-0 w-full max-w-lg backdrop:bg-black/40">
+    <form method="dialog" class="bg-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Новая цель</h3>
+        <button class="px-2 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+      <div class="grid gap-3">
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Название</span>
+          <input id="goal-title" class="rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" placeholder="Например: совместный ужин" required />
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Сколько баллов нужно</span>
+          <input id="goal-points" type="number" min="1" inputmode="numeric" class="rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" placeholder="10" required />
+        </label>
+        <div class="grid gap-1">
+          <span class="text-sm text-slate-600">Для кого</span>
+          <div class="flex gap-2">
+            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="goal-for" value="you" checked />
+              <span>Ты</span>
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="goal-for" value="her" />
+              <span>Она</span>
+            </label>
+          </div>
+        </div>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Комментарий — необязательно</span>
+          <input id="goal-note" class="rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" placeholder="До воскресенья" />
+        </label>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <button value="cancel" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100">Отмена</button>
+        <button id="save-goal" class="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Настройки -->
+  <dialog id="settings-modal" class="rounded-2xl p-0 w-full max-w-lg backdrop:bg-black/40">
+    <form method="dialog" class="bg-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Настройки</h3>
+        <button class="px-2 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+      <div class="grid gap-3">
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Имя слева</span>
+          <input id="name-you" class="rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" placeholder="Ты" />
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Имя справа</span>
+          <input id="name-her" class="rounded-xl border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-sky-400" placeholder="Она" />
+        </label>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button id="save-names" class="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
