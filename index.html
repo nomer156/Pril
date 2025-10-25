@@ -1,63 +1,193 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Мы</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Мы - цели и баллы</title>
+  <meta name="theme-color" content="#0ea5e9" />
+
+  <!-- Tailwind via CDN, без сборки -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Небольшая тема - скругления, шрифты
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'Arial'] },
+          boxShadow: { soft: '0 6px 30px rgba(0,0,0,.08)' }
+        }
+      }
+    };
+  </script>
+
+  <!-- Иконки -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E❤️%3C/text%3E%3C/svg%3E" />
+
+  <!-- Собственные стили - минимум -->
+  <link rel="stylesheet" href="./style.css" />
 </head>
-<body>
-  <div class="container">
-    <h1 contenteditable="true" id="title">Мы</h1>
-
-    <div class="profiles">
-      <div class="profile">
-        <div class="avatar" id="myAvatar">
-          <img id="myImg" src="" alt="Ты" style="display:none">
-          <div class="placeholder">Ты</div>
+<body class="bg-slate-50 text-slate-900 font-sans">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Top bar -->
+    <header class="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-slate-200">
+      <div class="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="h-9 w-9 grid place-items-center rounded-2xl bg-sky-500 text-white shadow-soft">❤️</div>
+          <div class="font-semibold">Мы</div>
+          <div id="room-badge" class="ml-3 text-sm px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 hidden"></div>
         </div>
-        <p class="name" contenteditable="true" id="myName">Ты</p>
-        <p class="emoji" contenteditable="true" id="myEmoji">👨</p>
-        <div class="score-label">Твой счёт: <span id="myScore">0</span></div>
-      </div>
-
-      <div class="center-heart">❤️</div>
-
-      <div class="profile">
-        <div class="avatar" id="herAvatar">
-          <img id="herImg" src="" alt="Она" style="display:none">
-          <div class="placeholder">Она</div>
+        <div class="flex items-center gap-2">
+          <button id="change-room" class="px-3 py-1.5 text-sm rounded-xl border border-slate-300 hover:bg-slate-100 active:scale-[.99] transition">
+            Сменить код пары
+          </button>
+          <button id="open-settings" class="px-3 py-1.5 text-sm rounded-xl border border-slate-300 hover:bg-slate-100 active:scale-[.99] transition">
+            Настройки
+          </button>
         </div>
-        <p class="name" contenteditable="true" id="herName">Она</p>
-        <p class="emoji" contenteditable="true" id="herEmoji">👩</p>
-        <div class="score-label">Её счёт: <span id="herScore">0</span></div>
       </div>
-    </div>
+    </header>
 
-    <div class="progress-wrapper">
-      <div class="progress-box mine">
-        <div class="progress-fill" id="myProgress"></div>
-        <div class="goals" id="myGoals"></div>
-      </div>
-      <div class="progress-box hers">
-        <div class="progress-fill" id="herProgress"></div>
-        <div class="goals" id="herGoals"></div>
-      </div>
-    </div>
+    <!-- Content -->
+    <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-6 grid gap-6">
+      <!-- Pair setup -->
+      <section id="pair-setup" class="hidden">
+        <div class="bg-white rounded-2xl shadow-soft p-6">
+          <h2 class="text-xl font-semibold mb-1">Подключение пары</h2>
+          <p class="text-slate-600 mb-4">Введите общий код пары. На обоих телефонах должен быть один и тот же код - тогда всё будет синхронизировано.</p>
+          <div class="grid sm:grid-cols-[1fr_auto] gap-3">
+            <input id="room-input" maxlength="12" placeholder="Например: 7NIKA23" class="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" />
+            <div class="flex gap-2">
+              <button id="join-room" class="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 active:scale-[.99] transition">Подключиться</button>
+              <button id="gen-room" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 active:scale-[.99] transition">Сгенерировать</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <div class="buttons">
-      <button id="myPoint" class="btn btn-me">+1 мне</button>
-      <button id="herPoint" class="btn btn-her">+1 ей</button>
-      <button id="addGoal" class="btn btn-add">Добавить цель</button>
-      <button id="reset" class="btn btn-reset">Сброс</button>
-    </div>
+      <!-- Scorecards -->
+      <section id="score-section" class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-soft p-6">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-slate-500 text-sm">Ты</div>
+            <button data-target="you" class="btn-add-point px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">+1</button>
+          </div>
+          <div class="text-5xl font-bold tracking-tight"><span id="score-you">0</span></div>
+          <div class="mt-4 flex items-center gap-2">
+            <button data-target="you" data-delta="1" class="btn-delta px-3 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 active:scale-[.99] transition">+1</button>
+            <button data-target="you" data-delta="-1" class="btn-delta px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 active:scale-[.99] transition">-1</button>
+            <input id="custom-you" type="number" inputmode="numeric" placeholder="+/-число" class="w-28 rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" />
+            <button data-target="you" id="apply-you" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 active:scale-[.99] transition">OK</button>
+          </div>
+        </div>
 
-    <div class="pinned" contenteditable="true" id="pinnedMessage">
-      Нажми, чтобы добавить надпись...
-    </div>
+        <div class="bg-white rounded-2xl shadow-soft p-6">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-slate-500 text-sm">Она</div>
+            <button data-target="her" class="btn-add-point px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-sm">+1</button>
+          </div>
+          <div class="text-5xl font-bold tracking-tight"><span id="score-her">0</span></div>
+          <div class="mt-4 flex items-center gap-2">
+            <button data-target="her" data-delta="1" class="btn-delta px-3 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600 active:scale-[.99] transition">+1</button>
+            <button data-target="her" data-delta="-1" class="btn-delta px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 active:scale-[.99] transition">-1</button>
+            <input id="custom-her" type="number" inputmode="numeric" placeholder="+/-число" class="w-28 rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" />
+            <button data-target="her" id="apply-her" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 active:scale-[.99] transition">OK</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions row -->
+      <section class="flex flex-wrap gap-3">
+        <button id="open-add-goal" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-sky-500 text-white hover:bg-sky-600 active:scale-[.99] transition shadow-soft">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M11 11V5a1 1 0 1 1 2 0v6h6a1 1 0 1 1 0 2h-6v6a1 1 0 1 1-2 0v-6H5a1 1 0 1 1 0-2h6z"/></svg>
+          Добавить цель
+        </button>
+        <button id="reset-scores" class="px-4 py-2 rounded-2xl border border-rose-300 text-rose-600 hover:bg-rose-50 active:scale-[.99] transition">Сбросить баллы</button>
+        <button id="clear-completed" class="px-4 py-2 rounded-2xl border border-slate-300 hover:bg-slate-100 active:scale-[.99] transition">Очистить выполненные</button>
+      </section>
+
+      <!-- Goals list -->
+      <section class="grid gap-3" id="goals-list"></section>
+
+      <!-- History -->
+      <section class="bg-white rounded-2xl shadow-soft p-6" id="history-card">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">История</h3>
+          <button id="clear-history" class="text-sm px-3 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100">Очистить</button>
+        </div>
+        <div id="history" class="mt-4 space-y-2 text-sm text-slate-700"></div>
+      </section>
+    </main>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <!-- Modals -->
+  <dialog id="goal-modal" class="rounded-2xl p-0 w-full max-w-lg backdrop:bg-black/40">
+    <form method="dialog" class="bg-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Новая цель</h3>
+        <button class="px-2 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+
+      <div class="grid gap-3">
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Название</span>
+          <input id="goal-title" class="rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" placeholder="Например: совместный ужин" required />
+        </label>
+
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Сколько баллов нужно</span>
+          <input id="goal-points" type="number" min="1" inputmode="numeric" class="rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" placeholder="Например: 10" required />
+        </label>
+
+        <div class="grid gap-1">
+          <span class="text-sm text-slate-600">Для кого</span>
+          <div class="flex gap-2">
+            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="goal-for" value="you" checked />
+              <span>Ты</span>
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="goal-for" value="her" />
+              <span>Она</span>
+            </label>
+          </div>
+        </div>
+
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Комментарий - необязательно</span>
+          <input id="goal-note" class="rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" placeholder="Например: до воскресенья" />
+        </label>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <button value="cancel" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100">Отмена</button>
+        <button id="save-goal" class="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settings-modal" class="rounded-2xl p-0 w-full max-w-lg backdrop:bg-black/40">
+    <form method="dialog" class="bg-white rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">Настройки</h3>
+        <button class="px-2 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+      <div class="grid gap-3">
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Имя слева</span>
+          <input id="name-you" class="rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" placeholder="Ты" />
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Имя справа</span>
+          <input id="name-her" class="rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-sky-400" placeholder="Она" />
+        </label>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button id="save-names" class="px-4 py-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Firebase app logic -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
