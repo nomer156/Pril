@@ -1,140 +1,310 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+// Модули Firebase v10 - CDN
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getDatabase, ref, onValue, set, update, push, remove } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
+// Конфигурация - твоя
 const firebaseConfig = {
   apiKey: "AIzaSyA62NZOIYoGmzyPbC4Av3u30s6cpoa5pIE",
   authDomain: "malaya-ac558.firebaseapp.com",
   databaseURL: "https://malaya-ac558-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "malaya-ac558",
+  storageBucket: "malaya-ac558.firebasestorage.app",
   messagingSenderId: "188618372933",
   appId: "1:188618372933:web:72bfda1c7938267e94702c"
 };
 
+// Инициализация
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
-const scoresRef = ref(db, 'scores');
-const dataRef = ref(db, 'data');
-const goalsRef = ref(db, 'goals');
+// Элементы UI
+const pairSetup = document.getElementById('pair-setup');
+const roomInput = document.getElementById('room-input');
+const joinRoomBtn = document.getElementById('join-room');
+const genRoomBtn = document.getElementById('gen-room');
+const roomBadge = document.getElementById('room-badge');
+const changeRoomBtn = document.getElementById('change-room');
 
-// Инициализация
-get(scoresRef).then(s => !s.exists() && set(scoresRef, { my: 0, her: 0 }));
-get(dataRef).then(s => !s.exists() && set(dataRef, {
-  title: "Мы", myName: "Ты", myEmoji: "👨",
-  herName: "Она", herEmoji: "👩", pinned: "Нажми, чтобы добавить надпись..."
-}));
-get(goalsRef).then(s => !s.exists() && set(goalsRef, []));
+const scoreYou = document.getElementById('score-you');
+const scoreHer = document.getElementById('score-her');
+const goalsList = document.getElementById('goals-list');
+const historyList = document.getElementById('history');
 
-// === РАНДОМ ФОТО ИЗ ПАПОК (АВТО) ===
-function loadRandomPhotos() {
-  // Список возможных фото (код сам найдёт все в папках, если сервер отдаёт directory listing)
-  const basePath = window.location.origin + window.location.pathname;
-  fetch(basePath + 'me/').then(r => r.text()).then(text => {
-    const links = text.match(/href="([^"]*\.(jpg|jpeg|png|webp))"/gi) || [];
-    const myPhotos = links.map(l => l.replace(/href="|"/g, '')).filter(p => p.startsWith('me/'));
-    if (myPhotos.length > 0) {
-      const randomMy = myPhotos[Math.floor(Math.random() * myPhotos.length)];
-      document.getElementById('myImg').src = randomMy;
-      document.getElementById('myImg').style.display = 'block';
-      document.querySelector('#myAvatar .placeholder').style.display = 'none';
-    }
-  }).catch(() => {}); // Игнор ошибок
+const openAddGoalBtn = document.getElementById('open-add-goal');
+const goalModal = document.getElementById('goal-modal');
+const goalTitle = document.getElementById('goal-title');
+const goalPoints = document.getElementById('goal-points');
+const goalNote = document.getElementById('goal-note');
+const saveGoalBtn = document.getElementById('save-goal');
 
-  fetch(basePath + 'her/').then(r => r.text()).then(text => {
-    const links = text.match(/href="([^"]*\.(jpg|jpeg|png|webp))"/gi) || [];
-    const herPhotos = links.map(l => l.replace(/href="|"/g, '')).filter(p => p.startsWith('her/'));
-    if (herPhotos.length > 0) {
-      const randomHer = herPhotos[Math.floor(Math.random() * herPhotos.length)];
-      document.getElementById('herImg').src = randomHer;
-      document.getElementById('herImg').style.display = 'block';
-      document.querySelector('#herAvatar .placeholder').style.display = 'none';
-    }
-  }).catch(() => {});
-}
+const resetScoresBtn = document.getElementById('reset-scores');
+const clearCompletedBtn = document.getElementById('clear-completed');
+const clearHistoryBtn = document.getElementById('clear-history');
 
-window.addEventListener('load', loadRandomPhotos);
+const openSettingsBtn = document.getElementById('open-settings');
+const settingsModal = document.getElementById('settings-modal');
+const nameYou = document.getElementById('name-you');
+const nameHer = document.getElementById('name-her');
+const saveNamesBtn = document.getElementById('save-names');
 
-// === ДАННЫЕ ===
-onValue(dataRef, s => {
-  const d = s.val() || {};
-  document.getElementById('title').textContent = d.title || "Мы";
-  document.getElementById('myName').textContent = d.myName || "Ты";
-  document.getElementById('myEmoji').textContent = d.myEmoji || "👨";
-  document.getElementById('herName').textContent = d.herName || "Она";
-  document.getElementById('herEmoji').textContent = d.herEmoji || "👩";
-  document.getElementById('pinnedMessage').textContent = d.pinned || "Нажми, чтобы добавить надпись...";
+const scoreSection = document.getElementById('score-section');
+
+let ROOM = localStorage.getItem('pair_room') || '';
+let unsubGoals = null;
+let unsubScores = null;
+let unsubNames = null;
+let unsubHistory = null;
+
+// Анонимный вход
+signInAnonymously(auth).catch(console.error);
+onAuthStateChanged(auth, (u) => {
+  if (!u) return;
+  init();
 });
 
-// === СЧЁТ ===
-onValue(scoresRef, s => {
-  const { my = 0, her = 0 } = s.val() || {};
-  document.getElementById('myScore').textContent = my;
-  document.getElementById('herScore').textContent = her;
-  document.getElementById('myProgress').style.height = `${Math.min(100, my)}%`;
-  document.getElementById('herProgress').style.height = `${Math.min(100, her)}%`;
-});
-
-// === ЦЕЛИ ===
-onValue(goalsRef, s => {
-  const goals = s.val() || [];
-  document.getElementById('myGoals').innerHTML = '';
-  document.getElementById('herGoals').innerHTML = '';
-  goals.forEach(g => {
-    const el = document.createElement('div');
-    el.className = 'goal';
-    el.textContent = g.text;
-    el.style.bottom = `${g.score}%`;
-    document.getElementById(g.isHer ? 'herGoals' : 'myGoals').appendChild(el);
-  });
-});
-
-// === СОХРАНЕНИЕ ТЕКСТА ===
-['title', 'myName', 'myEmoji', 'herName', 'herEmoji', 'pinnedMessage'].forEach(id => {
-  const el = document.getElementById(id);
-  el?.addEventListener('blur', () => {
-    const key = id === 'pinnedMessage' ? 'pinned' : id;
-    const updates = {}; updates[key] = el.textContent.trim();
-    set(dataRef, { ...getCurrentData(), ...updates });
-  });
-});
-
-function getCurrentData() {
-  return {
-    title: document.getElementById('title').textContent,
-    myName: document.getElementById('myName').textContent,
-    myEmoji: document.getElementById('myEmoji').textContent,
-    herName: document.getElementById('herName').textContent,
-    herEmoji: document.getElementById('herEmoji').textContent,
-    pinned: document.getElementById('pinnedMessage').textContent
-  };
-}
-
-// === КНОПКИ ===
-document.getElementById('myPoint').addEventListener('click', () => {
-  get(scoresRef).then(s => {
-    const { my = 0, her = 0 } = s.val() || {};
-    set(scoresRef, { my: Math.min(100, my + 1), her });
-  });
-});
-
-document.getElementById('herPoint').addEventListener('click', () => {
-  get(scoresRef).then(s => {
-    const { my = 0, her = 0 } = s.val() || {};
-    set(scoresRef, { my, her: Math.min(100, her + 1) });
-  });
-});
-
-document.getElementById('addGoal').addEventListener('click', () => {
-  const score = prompt("На каком счёте? (0–100)", "40");
-  const text = prompt("Что обещал(а)?", "с меня роллы");
-  const isHer = confirm("Это для неё? (ОК = да, Отмена = тебе)");
-  if (score && text) {
-    get(goalsRef).then(s => {
-      const goals = s.val() || [];
-      goals.push({ score: parseInt(score), text, isHer });
-      set(goalsRef, goals);
-    });
+function init() {
+  // Если код пары в URL-хеше - принять его
+  const fromHash = (location.hash || '').replace('#', '').trim();
+  if (fromHash && !ROOM) {
+    ROOM = normalizeRoom(fromHash);
+    localStorage.setItem('pair_room', ROOM);
   }
-});
 
-document.getElementById('reset').addEventListener('click', () => set(scoresRef, { my: 0, her: 0 }));
+  if (!ROOM) {
+    showPairSetup(true);
+  } else {
+    attachRoom(ROOM);
+  }
+
+  bindUI();
+}
+
+function normalizeRoom(s) {
+  return s.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+}
+
+function showPairSetup(show) {
+  pairSetup.classList.toggle('hidden', !show);
+  scoreSection.classList.toggle('hidden', show);
+  document.getElementById('history-card').classList.toggle('hidden', show);
+  document.getElementById('open-add-goal').classList.toggle('hidden', show);
+  document.getElementById('reset-scores').classList.toggle('hidden', show);
+  document.getElementById('clear-completed').classList.toggle('hidden', show);
+}
+
+function attachRoom(room) {
+  ROOM = normalizeRoom(room);
+  localStorage.setItem('pair_room', ROOM);
+  roomBadge.textContent = `Код пары: ${ROOM}`;
+  roomBadge.classList.remove('hidden');
+  showPairSetup(false);
+
+  // Инициализируем структуру, если её нет
+  const base = ref(db, `rooms/${ROOM}`);
+  setIfMissing(`${ROOM}/points`, { you: 0, her: 0 });
+  setIfMissing(`${ROOM}/names`, { you: 'Ты', her: 'Она' });
+
+  // Подписки
+  listenScores();
+  listenGoals();
+  listenNames();
+  listenHistory();
+}
+
+async function setIfMissing(path, defaultValue) {
+  const r = ref(db, path.startsWith('rooms/') ? path : `rooms/${path}`);
+  // Очень компактно - одна запись при отсутствии onValue
+  // Проверять существование точечно здесь не будем - слушатели все равно затащат текущее состояние
+  update(r, defaultValue).catch(()=>{});
+}
+
+function bindUI() {
+  // Смена/ввод комнаты
+  joinRoomBtn?.addEventListener('click', () => {
+    const v = normalizeRoom(roomInput.value);
+    if (!v) return;
+    attachRoom(v);
+    location.hash = v;
+  });
+  genRoomBtn?.addEventListener('click', () => {
+    const v = genCode();
+    roomInput.value = v;
+  });
+  changeRoomBtn?.addEventListener('click', () => {
+    showPairSetup(true);
+    roomInput.value = ROOM;
+  });
+
+  // Кнопки дельт
+  document.querySelectorAll('.btn-delta').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const who = btn.dataset.target;
+      const delta = parseInt(btn.dataset.delta, 10);
+      addPoints(who, delta, `ручное ${delta > 0 ? '+' : ''}${delta}`);
+    });
+  });
+  document.getElementById('apply-you')?.addEventListener('click', () => {
+    const v = parseInt(document.getElementById('custom-you').value, 10);
+    if (!isNaN(v) && v !== 0) addPoints('you', v, 'кастом');
+    document.getElementById('custom-you').value = '';
+  });
+  document.getElementById('apply-her')?.addEventListener('click', () => {
+    const v = parseInt(document.getElementById('custom-her').value, 10);
+    if (!isNaN(v) && v !== 0) addPoints('her', v, 'кастом');
+    document.getElementById('custom-her').value = '';
+  });
+
+  // Быстрый +1 в заголовке карточки
+  document.querySelectorAll('.btn-add-point').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addPoints(btn.dataset.target, 1, '+1');
+    });
+  });
+
+  // Цели
+  openAddGoalBtn?.addEventListener('click', () => {
+    goalTitle.value = '';
+    goalPoints.value = '';
+    goalNote.value = '';
+    goalModal.showModal();
+  });
+  saveGoalBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    createGoal();
+    goalModal.close();
+  });
+
+  // Сброс и чистки
+  resetScoresBtn?.addEventListener('click', () => confirmDialog('Точно сбросить баллы у обоих до 0?', () => resetScores()));
+  clearCompletedBtn?.addEventListener('click', () => clearCompleted());
+  clearHistoryBtn?.addEventListener('click', () => confirmDialog('Очистить историю?', () => clearHistory()));
+
+  // Настройки имен
+  openSettingsBtn?.addEventListener('click', () => {
+    nameYou.value = document.querySelector('.md\\:grid-cols-2 > :first-child .text-slate-500')?.textContent || 'Ты';
+    nameHer.value = document.querySelector('.md\\:grid-cols-2 > :last-child .text-slate-500')?.textContent || 'Она';
+    settingsModal.showModal();
+  });
+  saveNamesBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    saveNames(nameYou.value.trim() || 'Ты', nameHer.value.trim() || 'Она');
+    settingsModal.close();
+  });
+}
+
+function genCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 7; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+  return s;
+}
+
+function listenScores() {
+  if (!ROOM) return;
+  const r = ref(db, `rooms/${ROOM}/points`);
+  onValue(r, (snap) => {
+    const v = snap.val() || { you: 0, her: 0 };
+    scoreYou.textContent = v.you ?? 0;
+    scoreHer.textContent = v.her ?? 0;
+  });
+}
+
+function listenNames() {
+  if (!ROOM) return;
+  const r = ref(db, `rooms/${ROOM}/names`);
+  onValue(r, (snap) => {
+    const v = snap.val() || { you: 'Ты', her: 'Она' };
+    const youLabel = document.querySelector('.md\\:grid-cols-2 > :first-child .text-slate-500');
+    const herLabel = document.querySelector('.md\\:grid-cols-2 > :last-child .text-slate-500');
+    if (youLabel) youLabel.textContent = v.you || 'Ты';
+    if (herLabel) herLabel.textContent = v.her || 'Она';
+  });
+}
+
+function listenGoals() {
+  if (!ROOM) return;
+  const r = ref(db, `rooms/${ROOM}/goals`);
+  onValue(r, (snap) => {
+    const data = snap.val() || {};
+    renderGoals(data);
+  });
+}
+
+function listenHistory() {
+  if (!ROOM) return;
+  const r = ref(db, `rooms/${ROOM}/history`);
+  onValue(r, (snap) => {
+    const data = snap.val() || {};
+    renderHistory(data);
+  });
+}
+
+function addPoints(who, delta, reason = '') {
+  if (!ROOM) return;
+  const pointsRef = ref(db, `rooms/${ROOM}/points`);
+  // Транзакции нет в модульном импорте CDN удобной - делаем через onValue->update
+  onValue(pointsRef, (snap) => {
+    const cur = snap.val() || { you: 0, her: 0 };
+    const next = { ...cur, [who]: (parseInt(cur[who] || 0, 10) + delta) };
+    update(pointsRef, next);
+  }, { onlyOnce: true });
+
+  // История
+  push(ref(db, `rooms/${ROOM}/history`), {
+    t: Date.now(),
+    type: 'delta',
+    who,
+    delta,
+    reason
+  });
+}
+
+function resetScores() {
+  if (!ROOM) return;
+  set(ref(db, `rooms/${ROOM}/points`), { you: 0, her: 0 });
+  push(ref(db, `rooms/${ROOM}/history`), { t: Date.now(), type: 'reset' });
+}
+
+function createGoal() {
+  if (!ROOM) return;
+  const title = goalTitle.value.trim();
+  const need = parseInt(goalPoints.value, 10) || 0;
+  const note = goalNote.value.trim();
+  const forWho = (document.querySelector('input[name="goal-for"]:checked')?.value) || 'you';
+  if (!title || need < 1) return;
+
+  const idRef = push(ref(db, `rooms/${ROOM}/goals`));
+  const obj = {
+    title, need, note, for: forWho,
+    done: false,
+    createdAt: Date.now()
+  };
+  set(idRef, obj);
+
+  push(ref(db, `rooms/${ROOM}/history`), {
+    t: Date.now(),
+    type: 'goal-create',
+    goal: obj.title,
+    for: obj.for,
+    need: obj.need
+  });
+}
+
+function toggleGoal(id, current) {
+  update(ref(db, `rooms/${ROOM}/goals/${id}`), { done: !current });
+  push(ref(db, `rooms/${ROOM}/history`), {
+    t: Date.now(),
+    type: 'goal-toggle',
+    goalId: id,
+    to: !current
+  });
+}
+
+function deleteGoal(id, title) {
+  remove(ref(db, `rooms/${ROOM}/goals/${id}`));
+  push(ref(db, `rooms/${ROOM}/history`), {
+    t: Date.now(),
+    type: 'goal-delete',
+    goal:
