@@ -3,16 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Любовь</title>
+  <title>Мы</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <h1>Любовь</h1>
+    <!-- Заголовок -->
+    <div class="header">
+      <h1 contenteditable="true" id="title">Мы</h1>
+    </div>
 
+    <!-- Фото и имена -->
+    <div class="profiles">
+      <div class="profile" id="me">
+        <div class="avatar" id="myAvatar">
+          <input type="file" id="myPhoto" accept="image/*" style="display:none">
+          <img src="" alt="" id="myImg" style="display:none">
+          <div class="placeholder">Ты</div>
+        </div>
+        <p class="name" contenteditable="true" id="myName">Ты</p>
+        <p class="emoji" contenteditable="true" id="myEmoji">Мужчина</p>
+      </div>
+
+      <div class="vs">vs</div>
+
+      <div class="profile" id="her">
+        <div class="avatar" id="herAvatar">
+          <input type="file" id="herPhoto" accept="image/*" style="display:none">
+          <img src="" alt="" id="herImg" style="display:none">
+          <div class="placeholder">Она</div>
+        </div>
+        <p class="name" contenteditable="true" id="herName">Она</p>
+        <p class="emoji" contenteditable="true" id="herEmoji">Женщина</p>
+      </div>
+    </div>
+
+    <!-- Счёт -->
     <div class="score" id="score">0</div>
 
+    <!-- Прогресс -->
     <div class="progress-container">
       <div class="progress-bar">
         <div class="fill-me" id="fillMe"></div>
@@ -21,16 +51,16 @@
       </div>
     </div>
 
+    <!-- Кнопки -->
     <div class="buttons">
-      <button id="myPoint" class="btn btn-me">
-        <span>Ты</span>
-      </button>
-      <button id="herPoint" class="btn btn-her">
-        <span>Она</span>
-      </button>
-      <button id="reset" class="btn btn-reset">
-        <span>Сброс</span>
-      </button>
+      <button id="myPoint" class="btn btn-me">+1 мне</button>
+      <button id="herPoint" class="btn btn-her">+1 ей</button>
+      <button id="reset" class="btn btn-reset">Сброс</button>
+    </div>
+
+    <!-- Закреплённая надпись -->
+    <div class="pinned" contenteditable="true" id="pinnedMessage" placeholder="Нажми, чтобы добавить надпись...">
+      Нажми, чтобы добавить надпись...
     </div>
   </div>
 
