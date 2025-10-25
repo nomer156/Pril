@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мы</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1 contenteditable="true" id="title">Мы</h1>
+
+    <div class="profiles">
+      <div class="profile">
+        <div class="avatar" id="myAvatar">
+          <img id="myImg" src="" alt="Ты" style="display:none">
+          <div class="placeholder">Ты</div>
+        </div>
+        <p class="name" contenteditable="true" id="myName">Ты</p>
+        <p class="emoji" contenteditable="true" id="myEmoji">👨</p>
+        <div class="score-label">Твой счёт: <span id="myScore">0</span></div>
+      </div>
+
+      <div class="center-heart">❤️</div>
+
+      <div class="profile">
+        <div class="avatar" id="herAvatar">
+          <img id="herImg" src="" alt="Она" style="display:none">
+          <div class="placeholder">Она</div>
+        </div>
+        <p class="name" contenteditable="true" id="herName">Она</p>
+        <p class="emoji" contenteditable="true" id="herEmoji">👩</p>
+        <div class="score-label">Её счёт: <span id="herScore">0</span></div>
+      </div>
+    </div>
+
+    <div class="progress-wrapper">
+      <div class="progress-box mine">
+        <div class="progress-fill" id="myProgress"></div>
+        <div class="goals" id="myGoals"></div>
+      </div>
+      <div class="progress-box hers">
+        <div class="progress-fill" id="herProgress"></div>
+        <div class="goals" id="herGoals"></div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button id="myPoint" class="btn btn-me">+1 мне</button>
+      <button id="herPoint" class="btn btn-her">+1 ей</button>
+      <button id="addGoal" class="btn btn-add">Добавить цель</button>
+      <button id="reset" class="btn btn-reset">Сброс</button>
+    </div>
+
+    <div class="pinned" contenteditable="true" id="pinnedMessage">
+      Нажми, чтобы добавить надпись...
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
