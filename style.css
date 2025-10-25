@@ -1,6 +1,0 @@
-/* Буквально немного кастома поверх Tailwind */
-::backdrop { background: rgba(0,0,0,.4); }
-dialog[open] { animation: pop .15s ease-out; }
-@keyframes pop { from { transform: scale(.98); opacity: .5; } to { transform: scale(1); opacity: 1; } }
-
-input[type="radio"] { accent-color: #0ea5e9; }
