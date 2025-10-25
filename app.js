@@ -1,6 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA62NZOIYoGmzyPbC4Av3u30s6cpoa5pIE",
@@ -14,53 +13,66 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const storage = getStorage(app);
 
-// Ссылки
 const scoresRef = ref(db, 'scores');
 const dataRef = ref(db, 'data');
+const goalsRef = ref(db, 'goals');
 
 // Инициализация
-get(scoresRef).then(s => {
-  if (!s.exists()) set(scoresRef, { my: 0, her: 0 });
-});
-get(dataRef).then(s => {
-  if (!s.exists()) {
-    set(dataRef, {
-      title: "Мы",
-      myName: "Ты", myEmoji: "Мужчина", myPhoto: "",
-      herName: "Она", herEmoji: "Женщина", herPhoto: "",
-      pinned: "Нажми, чтобы добавить надпись..."
-    });
-  }
-});
+get(scoresRef).then(s => !s.exists() && set(scoresRef, { my: 0, her: 0 }));
+get(dataRef).then(s => !s.exists() && set(dataRef, {
+  title: "Мы", myName: "Ты", myEmoji: "Мужчина",
+  herName: "Она", herEmoji: "Женщина", pinned: "Нажми, чтобы добавить надпись..."
+}));
+get(goalsRef).then(s => !s.exists() && set(goalsRef, []));
 
-// Загрузка данных
-onValue(dataRef, (s) => {
-  const d = s.val() || {};
-  document.getElementById('title').textContent = d.title || "Мы";
-  document.getElementById('myName').textContent = d.myName || "Ты";
-  document.getElementById('myEmoji').textContent = d.myEmoji || "Мужчина";
-  document.getElementById('herName').textContent = d.herName || "Она";
-  document.getElementById('herEmoji').textContent = d.herEmoji || "Женщина";
-  document.getElementById('pinnedMessage').textContent = d.pinned || "";
+// === РАНДОМ ФОТО ИЗ ПАПОК ===
+const myPhotos = [
+  'me/1.jpg', 'me/2.jpg', 'me/3.jpg', 'me/4.jpg', 'me/5.jpg'
+  // ← Добавь свои фото сюда (или удали лишние)
+];
+const herPhotos = [
+  'her/1.jpg', 'her/2.jpg', 'her/3.jpg', 'her/4.jpg', 'her/5.jpg'
+  // ← Добавь её фото
+];
 
-  if (d.myPhoto) {
-    const img = document.getElementById('myImg');
-    img.src = d.myPhoto;
-    img.style.display = 'block';
+function randomPhoto(paths) {
+  if (paths.length === 0) return '';
+  return paths[Math.floor(Math.random() * paths.length)];
+}
+
+// Показать рандомное фото при загрузке
+window.addEventListener('load', () => {
+  const myImg = document.getElementById('myImg');
+  const herImg = document.getElementById('herImg');
+
+  const mySrc = randomPhoto(myPhotos);
+  const herSrc = randomPhoto(herPhotos);
+
+  if (mySrc) {
+    myImg.src = mySrc;
+    myImg.style.display = 'block';
     document.querySelector('#myAvatar .placeholder').style.display = 'none';
   }
-  if (d.herPhoto) {
-    const img = document.getElementById('herImg');
-    img.src = d.herPhoto;
-    img.style.display = 'block';
+
+  if (herSrc) {
+    herImg.src = herSrc;
+    herImg.style.display = 'block';
     document.querySelector('#herAvatar .placeholder').style.display = 'none';
   }
 });
 
-// Счёты
-onValue(scoresRef, (s) => {
+// === ДАННЫЕ ===
+onValue(dataRef, s => {
+  const d = s.val() || {};
+  ['title', 'myName', 'myEmoji', 'herName', 'herEmoji', 'pinnedMessage'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = d[id] || (id === 'pinnedMessage' ? 'Нажми, чтобы добавить надпись...' : '');
+  });
+});
+
+// === СЧЁТ ===
+onValue(scoresRef, s => {
   const { my = 0, her = 0 } = s.val() || {};
   document.getElementById('myScore').textContent = my;
   document.getElementById('herScore').textContent = her;
@@ -68,36 +80,29 @@ onValue(scoresRef, (s) => {
   document.getElementById('herProgress').style.height = `${Math.min(100, her)}%`;
 });
 
-// Сохранение текста
+// === ЦЕЛИ ===
+onValue(goalsRef, s => {
+  const goals = s.val() || [];
+  document.getElementById('myGoals').innerHTML = '';
+  document.getElementById('herGoals').innerHTML = '';
+  goals.forEach(g => {
+    const el = document.createElement('div');
+    el.className = 'goal';
+    el.textContent = g.text;
+    el.style.bottom = `${g.score}%`;
+    document.getElementById(g.isHer ? 'herGoals' : 'myGoals').appendChild(el);
+  });
+});
+
+// === СОХРАНЕНИЕ ТЕКСТА ===
 ['title', 'myName', 'myEmoji', 'herName', 'herEmoji', 'pinnedMessage'].forEach(id => {
   const el = document.getElementById(id);
-  el.addEventListener('blur', () => {
+  el?.addEventListener('blur', () => {
     const key = id === 'pinnedMessage' ? 'pinned' : id;
     const updates = {}; updates[key] = el.textContent.trim();
     set(dataRef, { ...getCurrentData(), ...updates });
   });
 });
-
-// Фото
-document.getElementById('myAvatar').addEventListener('click', () => document.getElementById('myPhoto').click());
-document.getElementById('herAvatar').addEventListener('click', () => document.getElementById('herPhoto').click());
-
-document.getElementById('myPhoto').addEventListener('change', e => uploadPhoto(e, 'myPhoto', 'myImg'));
-document.getElementById('herPhoto').addEventListener('change', e => uploadPhoto(e, 'herPhoto', 'herImg'));
-
-async function uploadPhoto(e, field, imgId) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const path = `photos/${Date.now()}_${file.name}`;
-  const photoRef = storageRef(storage, path);
-  await uploadBytes(photoRef, file);
-  const url = await getDownloadURL(photoRef);
-  document.getElementById(imgId).src = url;
-  document.getElementById(imgId).style.display = 'block';
-  document.querySelector(`#${imgId.replace('Img', 'Avatar')} .placeholder`).style.display = 'none';
-  const updates = {}; updates[field] = url;
-  set(dataRef, { ...getCurrentData(), ...updates });
-}
 
 function getCurrentData() {
   return {
@@ -110,21 +115,32 @@ function getCurrentData() {
   };
 }
 
-// Кнопки
-document.getElementById('myPoint').addEventListener('click', () => {
+// === КНОПКИ ===
+document.getElementById('myPoint').onclick = () => {
   get(scoresRef).then(s => {
     const { my = 0, her = 0 } = s.val() || {};
     set(scoresRef, { my: Math.min(100, my + 1), her });
   });
-});
+};
 
-document.getElementById('herPoint').addEventListener('click', () => {
+document.getElementById('herPoint').onclick = () => {
   get(scoresRef).then(s => {
     const { my = 0, her = 0 } = s.val() || {};
     set(scoresRef, { my, her: Math.min(100, her + 1) });
   });
-});
+};
 
-document.getElementById('reset').addEventListener('click', () => {
-  set(scoresRef, { my: 0, her: 0 });
-});
+document.getElementById('addGoal').onclick = () => {
+  const score = prompt("На каком счёте? (0–100)", "40");
+  const text = prompt("Что обещал(а)?", "с меня роллы");
+  const isHer = confirm("Это для неё? (ОК = да, Отмена = тебе)");
+  if (score && text) {
+    get(goalsRef).then(s => {
+      const goals = s.val() || [];
+      goals.push({ score: parseInt(score), text, isHer });
+      set(goalsRef, goals);
+    });
+  }
+};
+
+document.getElementById('reset').onclick = () => set(scoresRef, { my: 0, her: 0 });
