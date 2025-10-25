@@ -3,28 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Наши баллы</title>
+  <title>Любовь</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <h1>Наши баллы</h1>
+    <h1>Любовь</h1>
+
     <div class="score" id="score">0</div>
 
-    <div class="bar-container">
-      <div class="fill-her" id="fillHer"></div>
-      <div class="fill-me" id="fillMe"></div>
-      <div class="cup" id="cup">Кубок</div>
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="fill-me" id="fillMe"></div>
+        <div class="fill-her" id="fillHer"></div>
+        <div class="heart" id="heart">Сердце</div>
+      </div>
     </div>
 
     <div class="buttons">
-      <div class="label">Ты (+1 тебе — вниз)</div>
-      <button id="myPoint">+1 мне!</button>
-
-      <div class="label">Она (+1 ей — вверх)</div>
-      <button id="herPoint">+1 ей!</button>
-
-      <button id="reset">Сбросить</button>
+      <button id="myPoint" class="btn btn-me">
+        <span>Ты</span>
+      </button>
+      <button id="herPoint" class="btn btn-her">
+        <span>Она</span>
+      </button>
+      <button id="reset" class="btn btn-reset">
+        <span>Сброс</span>
+      </button>
     </div>
   </div>
 
