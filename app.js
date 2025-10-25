@@ -307,4 +307,130 @@ function deleteGoal(id, title) {
   push(ref(db, `rooms/${ROOM}/history`), {
     t: Date.now(),
     type: 'goal-delete',
-    goal:
+    goal: title
+  });
+}
+
+function clearCompleted() {
+  onValue(ref(db, `rooms/${ROOM}/goals`), (snap) => {
+    const data = snap.val() || {};
+    Object.entries(data).forEach(([id, g]) => {
+      if (g.done) remove(ref(db, `rooms/${ROOM}/goals/${id}`));
+    });
+  }, { onlyOnce: true });
+}
+
+function clearHistory() {
+  set(ref(db, `rooms/${ROOM}/history`), null);
+}
+
+function saveNames(you, her) {
+  update(ref(db, `rooms/${ROOM}/names`), { you, her });
+}
+
+function renderGoals(data) {
+  goalsList.innerHTML = '';
+  const items = Object.entries(data).sort((a, b) => (a[1].done === b[1].done) ? (b[1].createdAt - a[1].createdAt) : (a[1].done - b[1].done));
+  if (!items.length) {
+    goalsList.innerHTML = `<div class="bg-white rounded-2xl shadow-soft p-6 text-slate-500">Пока нет целей - добавь первую.</div>`;
+    return;
+  }
+  for (const [id, g] of items) {
+    const row = document.createElement('div');
+    row.className = `bg-white rounded-2xl shadow-soft p-4 flex items-start gap-4 ${g.done ? 'opacity-60' : ''}`;
+
+    const badge = document.createElement('div');
+    badge.className = `px-2 py-1 text-xs rounded-lg ${g.for === 'you' ? 'bg-sky-100 text-sky-700' : 'bg-violet-100 text-violet-700'}`;
+    badge.textContent = g.for === 'you' ? 'для тебя' : 'для неё';
+
+    const title = document.createElement('div');
+    title.className = 'font-medium';
+    title.textContent = g.title;
+
+    const meta = document.createElement('div');
+    meta.className = 'text-sm text-slate-600';
+    meta.textContent = `нужно: ${g.need}${g.note ? ' · ' + g.note : ''}`;
+
+    const left = document.createElement('div');
+    left.className = 'flex-1';
+    left.appendChild(badge);
+    left.appendChild(document.createElement('div')).style.height = '4px';
+    left.appendChild(title);
+    left.appendChild(meta);
+
+    const actions = document.createElement('div');
+    actions.className = 'flex items-center gap-2';
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = `px-3 py-2 rounded-xl border ${g.done ? 'border-slate-300' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'}`;
+    doneBtn.textContent = g.done ? 'Вернуть в работу' : 'Отметить выполненной';
+    doneBtn.addEventListener('click', () => toggleGoal(id, g.done));
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'px-3 py-2 rounded-xl border border-rose-300 text-rose-700 hover:bg-rose-50';
+    delBtn.textContent = 'Удалить';
+    delBtn.addEventListener('click', () => confirmDialog(`Удалить цель «${g.title}»?`, () => deleteGoal(id, g.title)));
+
+    actions.appendChild(doneBtn);
+    actions.appendChild(delBtn);
+
+    row.appendChild(left);
+    row.appendChild(actions);
+    goalsList.appendChild(row);
+  }
+}
+
+function renderHistory(data) {
+  historyList.innerHTML = '';
+  const items = Object.entries(data).sort((a, b) => a[1].t - b[1].t);
+  for (const [, h] of items) {
+    const row = document.createElement('div');
+    const d = new Date(h.t || Date.now());
+    const when = d.toLocaleString();
+
+    let text = '';
+    if (h.type === 'delta') {
+      text = `${when}: ${h.who === 'you' ? 'ты' : 'она'} ${h.delta > 0 ? '+' : ''}${h.delta}${h.reason ? ' (' + h.reason + ')' : ''}`;
+    } else if (h.type === 'reset') {
+      text = `${when}: сброс баллов`;
+    } else if (h.type === 'goal-create') {
+      text = `${when}: добавлена цель «${h.goal}» для ${h.for === 'you' ? 'тебя' : 'нее'} на ${h.need}`;
+    } else if (h.type === 'goal-toggle') {
+      text = `${when}: цель отмечена ${h.to ? 'выполненной' : 'активной'}`;
+    } else if (h.type === 'goal-delete') {
+      text = `${when}: удалена цель «${h.goal}»`;
+    }
+    row.textContent = text;
+    historyList.appendChild(row);
+  }
+}
+
+function confirmDialog(message, onOk) {
+  const d = document.createElement('dialog');
+  d.className = 'rounded-2xl p-0 w-full max-w-sm backdrop:bg-black/40';
+  d.innerHTML = `
+    <form method="dialog" class="bg-white rounded-2xl p-6">
+      <div class="text-slate-800 font-medium mb-4">${escapeHtml(message)}</div>
+      <div class="flex justify-end gap-2">
+        <button value="cancel" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100">Отмена</button>
+        <button id="ok" class="px-4 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600">Ок</button>
+      </div>
+    </form>
+  `;
+  document.body.appendChild(d);
+  d.showModal();
+  d.querySelector('#ok').addEventListener('click', (e) => {
+    e.preventDefault();
+    d.close();
+    onOk?.();
+    setTimeout(() => d.remove(), 100);
+  });
+  d.addEventListener('close', () => setTimeout(() => d.remove(), 100));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// Первичный показ блока подключения если комнаты нет
+if (!ROOM) showPairSetup(true);
