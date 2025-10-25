@@ -6,7 +6,6 @@ const firebaseConfig = {
   authDomain: "malaya-ac558.firebaseapp.com",
   databaseURL: "https://malaya-ac558-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "malaya-ac558",
-  storageBucket: "malaya-ac558.firebasestorage.app",
   messagingSenderId: "188618372933",
   appId: "1:188618372933:web:72bfda1c7938267e94702c"
 };
@@ -26,44 +25,56 @@ get(dataRef).then(s => !s.exists() && set(dataRef, {
 }));
 get(goalsRef).then(s => !s.exists() && set(goalsRef, []));
 
-// === РАНДОМ ФОТО ИЗ ПАПОК ===
-const myPhotos = [
-  'me/1.jpg', 'me/2.jpg', 'me/3.jpg', 'me/4.jpg', 'me/5.jpg'
-  // ← Добавь свои фото сюда (или удали лишние)
-];
-const herPhotos = [
-  'her/1.jpg', 'her/2.jpg', 'her/3.jpg', 'her/4.jpg', 'her/5.jpg'
-  // ← Добавь её фото
-];
+// === АВТО-РАНДОМ ИЗ ПАПОК me/ и her/ ===
+async function loadRandomPhoto() {
+  try {
+    const base = window.location.href.split('/').slice(0, -1).join('/');
+    
+    // Получаем список всех файлов в папке
+    const response = await fetch(`${base}/me/`);
+    const text = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+    const links = Array.from(doc.querySelectorAll('a'))
+      .map(a => a.getAttribute('href'))
+      .filter(href => href && (href.endsWith('.jpg') || href.endsWith('.jpeg') || href.endsWith('.png') || href.endsWith('.webp')))
+      .map(href => href.startsWith('/') ? href.slice(1) : `me/${href}`);
 
-function randomPhoto(paths) {
-  if (paths.length === 0) return '';
-  return paths[Math.floor(Math.random() * paths.length)];
-}
+    const myPhotos = links.length > 0 ? links : ['me/default.jpg'];
+    const myRandom = myPhotos[Math.floor(Math.random() * myPhotos.length)];
 
-// Показать рандомное фото при загрузке
-window.addEventListener('load', () => {
-  const myImg = document.getElementById('myImg');
-  const herImg = document.getElementById('herImg');
+    const herResponse = await fetch(`${base}/her/`);
+    const herText = await herResponse.text();
+    const herDoc = parser.parseFromString(herText, 'text/html');
+    const herLinks = Array.from(herDoc.querySelectorAll('a'))
+      .map(a => a.getAttribute('href'))
+      .filter(href => href && (href.endsWith('.jpg') || href.endsWith('.jpeg') || href.endsWith('.png') || href.endsWith('.webp')))
+      .map(href => href.startsWith('/') ? href.slice(1) : `her/${href}`);
 
-  const mySrc = randomPhoto(myPhotos);
-  const herSrc = randomPhoto(herPhotos);
+    const herPhotos = herLinks.length > 0 ? herLinks : ['her/default.jpg'];
+    const herRandom = herPhotos[Math.floor(Math.random() * herPhotos.length)];
 
-  if (mySrc) {
-    myImg.src = mySrc;
+    // Показать
+    const myImg = document.getElementById('myImg');
+    myImg.src = myRandom;
     myImg.style.display = 'block';
     document.querySelector('#myAvatar .placeholder').style.display = 'none';
-  }
 
-  if (herSrc) {
-    herImg.src = herSrc;
+    const herImg = document.getElementById('herImg');
+    herImg.src = herRandom;
     herImg.style.display = 'block';
     document.querySelector('#herAvatar .placeholder').style.display = 'none';
+
+  } catch (e) {
+    console.log("Фото не найдены, используем заглушки");
   }
-});
+}
+
+// Загрузка фото при старте
+window.addEventListener('load', loadRandomPhoto);
 
 // === ДАННЫЕ ===
-onValue(dataRef, s => {
+ OnValue(dataRef, s => {
   const d = s.val() || {};
   ['title', 'myName', 'myEmoji', 'herName', 'herEmoji', 'pinnedMessage'].forEach(id => {
     const el = document.getElementById(id);
@@ -94,7 +105,7 @@ onValue(goalsRef, s => {
   });
 });
 
-// === СОХРАНЕНИЕ ТЕКСТА ===
+// === СОХРАНЕНИЕ ===
 ['title', 'myName', 'myEmoji', 'herName', 'herEmoji', 'pinnedMessage'].forEach(id => {
   const el = document.getElementById(id);
   el?.addEventListener('blur', () => {
