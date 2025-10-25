@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getDatabase, ref, onValue, set, get, push } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -17,10 +17,13 @@ const db = getDatabase(app);
 const storage = getStorage(app);
 
 // Ссылки
-const positionRef = ref(db, 'position');
+const scoresRef = ref(db, 'scores');
 const dataRef = ref(db, 'data');
 
 // Инициализация
+get(scoresRef).then(s => {
+  if (!s.exists()) set(scoresRef, { my: 0, her: 0 });
+});
 get(dataRef).then(s => {
   if (!s.exists()) {
     set(dataRef, {
@@ -30,7 +33,6 @@ get(dataRef).then(s => {
       pinned: "Нажми, чтобы добавить надпись..."
     });
   }
-  set(positionRef, 0);
 });
 
 // Загрузка данных
@@ -43,21 +45,35 @@ onValue(dataRef, (s) => {
   document.getElementById('herEmoji').textContent = d.herEmoji || "Женщина";
   document.getElementById('pinnedMessage').textContent = d.pinned || "";
 
-  if (d.myPhoto) { document.getElementById('myImg').src = d.myPhoto; document.getElementById('myImg').style.display = 'block'; document.querySelector('#myAvatar .placeholder').style.display = 'none'; }
-  if (d.herPhoto) { document.getElementById('herImg').src = d.herPhoto; document.getElementById('herImg').style.display = 'block'; document.querySelector('#herAvatar .placeholder').style.display = 'none'; }
+  if (d.myPhoto) {
+    const img = document.getElementById('myImg');
+    img.src = d.myPhoto;
+    img.style.display = 'block';
+    document.querySelector('#myAvatar .placeholder').style.display = 'none';
+  }
+  if (d.herPhoto) {
+    const img = document.getElementById('herImg');
+    img.src = d.herPhoto;
+    img.style.display = 'block';
+    document.querySelector('#herAvatar .placeholder').style.display = 'none';
+  }
 });
 
-onValue(positionRef, (s) => {
-  const pos = s.val() || 0;
-  updateUI(pos);
+// Счёты
+onValue(scoresRef, (s) => {
+  const { my = 0, her = 0 } = s.val() || {};
+  document.getElementById('myScore').textContent = my;
+  document.getElementById('herScore').textContent = her;
+  document.getElementById('myProgress').style.height = `${Math.min(100, my)}%`;
+  document.getElementById('herProgress').style.height = `${Math.min(100, her)}%`;
 });
 
-// Сохранение при изменении
+// Сохранение текста
 ['title', 'myName', 'myEmoji', 'herName', 'herEmoji', 'pinnedMessage'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('blur', () => {
-    const updates = {};
-    updates[id === 'pinnedMessage' ? 'pinned' : id] = el.textContent.trim();
+    const key = id === 'pinnedMessage' ? 'pinned' : id;
+    const updates = {}; updates[key] = el.textContent.trim();
     set(dataRef, { ...getCurrentData(), ...updates });
   });
 });
@@ -66,14 +82,14 @@ onValue(positionRef, (s) => {
 document.getElementById('myAvatar').addEventListener('click', () => document.getElementById('myPhoto').click());
 document.getElementById('herAvatar').addEventListener('click', () => document.getElementById('herPhoto').click());
 
-document.getElementById('myPhoto').addEventListener('change', (e) => uploadPhoto(e, 'myPhoto', 'myImg'));
-document.getElementById('herPhoto').addEventListener('change', (e) => uploadPhoto(e, 'herPhoto', 'herImg'));
+document.getElementById('myPhoto').addEventListener('change', e => uploadPhoto(e, 'myPhoto', 'myImg'));
+document.getElementById('herPhoto').addEventListener('change', e => uploadPhoto(e, 'herPhoto', 'herImg'));
 
 async function uploadPhoto(e, field, imgId) {
   const file = e.target.files[0];
   if (!file) return;
-  const storagePath = `photos/${Date.now()}_${file.name}`;
-  const photoRef = storageRef(storage, storagePath);
+  const path = `photos/${Date.now()}_${file.name}`;
+  const photoRef = storageRef(storage, path);
   await uploadBytes(photoRef, file);
   const url = await getDownloadURL(photoRef);
   document.getElementById(imgId).src = url;
@@ -94,24 +110,21 @@ function getCurrentData() {
   };
 }
 
-// Прогресс
-function updateUI(position) {
-  document.getElementById('score').textContent = position;
-  const heart = document.getElementById('heart');
-  const fillHer = document.getElementById('fillHer');
-  const fillMe = document.getElementById('fillMe');
-  const percent = ((position + 100) / 200) * 100;
-  heart.style.top = `${percent}%`;
-  const herH = Math.min(100, (position + 100) / 2);
-  fillHer.style.height = `${herH}%`;
-  fillMe.style.height = `${100 - herH}%`;
-}
-
 // Кнопки
 document.getElementById('myPoint').addEventListener('click', () => {
-  get(positionRef).then(s => set(positionRef, Math.max(-100, (s.val() || 0) - 1)));
+  get(scoresRef).then(s => {
+    const { my = 0, her = 0 } = s.val() || {};
+    set(scoresRef, { my: Math.min(100, my + 1), her });
+  });
 });
+
 document.getElementById('herPoint').addEventListener('click', () => {
-  get(positionRef).then(s => set(positionRef, Math.min(100, (s.val() || 0) + 1)));
+  get(scoresRef).then(s => {
+    const { my = 0, her = 0 } = s.val() || {};
+    set(scoresRef, { my, her: Math.min(100, her + 1) });
+  });
 });
-document.getElementById('reset').addEventListener('click', () => set(positionRef, 0));
+
+document.getElementById('reset').addEventListener('click', () => {
+  set(scoresRef, { my: 0, her: 0 });
+});
