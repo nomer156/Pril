@@ -10,44 +10,42 @@
 <body>
   <div class="container">
     <!-- Заголовок -->
-    <div class="header">
-      <h1 contenteditable="true" id="title">Мы</h1>
-    </div>
+    <h1 contenteditable="true" id="title">Мы</h1>
 
-    <!-- Фото и имена -->
+    <!-- Профили -->
     <div class="profiles">
-      <div class="profile" id="me">
+      <div class="profile">
         <div class="avatar" id="myAvatar">
           <input type="file" id="myPhoto" accept="image/*" style="display:none">
-          <img src="" alt="" id="myImg" style="display:none">
+          <img id="myImg" src="" style="display:none">
           <div class="placeholder">Ты</div>
         </div>
         <p class="name" contenteditable="true" id="myName">Ты</p>
         <p class="emoji" contenteditable="true" id="myEmoji">Мужчина</p>
+        <div class="score-label">Твой счёт: <span id="myScore">0</span></div>
       </div>
 
-      <div class="vs">vs</div>
+      <div class="center-heart">Сердце</div>
 
-      <div class="profile" id="her">
+      <div class="profile">
         <div class="avatar" id="herAvatar">
           <input type="file" id="herPhoto" accept="image/*" style="display:none">
-          <img src="" alt="" id="herImg" style="display:none">
+          <img id="herImg" src="" style="display:none">
           <div class="placeholder">Она</div>
         </div>
         <p class="name" contenteditable="true" id="herName">Она</p>
         <p class="emoji" contenteditable="true" id="herEmoji">Женщина</p>
+        <div class="score-label">Её счёт: <span id="herScore">0</span></div>
       </div>
     </div>
 
-    <!-- Счёт -->
-    <div class="score" id="score">0</div>
-
-    <!-- Прогресс -->
-    <div class="progress-container">
-      <div class="progress-bar">
-        <div class="fill-me" id="fillMe"></div>
-        <div class="fill-her" id="fillHer"></div>
-        <div class="heart" id="heart">Сердце</div>
+    <!-- Прогресс-бары -->
+    <div class="progress-wrapper">
+      <div class="progress-box">
+        <div class="progress-fill" id="myProgress" style="height: 0%"></div>
+      </div>
+      <div class="progress-box">
+        <div class="progress-fill" id="herProgress" style="height: 0%"></div>
       </div>
     </div>
 
@@ -59,7 +57,7 @@
     </div>
 
     <!-- Закреплённая надпись -->
-    <div class="pinned" contenteditable="true" id="pinnedMessage" placeholder="Нажми, чтобы добавить надпись...">
+    <div class="pinned" contenteditable="true" id="pinnedMessage">
       Нажми, чтобы добавить надпись...
     </div>
   </div>
