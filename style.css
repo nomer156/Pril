@@ -1,67 +1,154 @@
-body {
-  font-family: 'Segoe UI', sans-serif;
-  text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+* {
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: #fff;
   min-height: 100vh;
-}
-.container {
-  max-width: 400px;
-  margin: 0 auto;
-  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
 }
-.bar-container {
+
+.container {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  padding: 30px 20px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #00d2ff, #ff00c8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+
+.score {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 20px 0;
+  background: linear-gradient(90deg, #00d2ff, #ff00c8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+}
+
+.progress-container {
   position: relative;
   width: 80px;
-  height: 400px;
+  height: 320px;
   margin: 40px auto;
-  background: #fff;
-  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
-.fill-her {
-  position: absolute;
-  bottom: 50%;
+
+.progress-bar {
+  position: relative;
   width: 100%;
-  background: #ff6b9d;
-  transition: height 0.4s ease;
+  height: 100%;
 }
+
+.fill-me, .fill-her {
+  position: absolute;
+  width: 100%;
+  transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .fill-me {
-  position: absolute;
-  top: 50%;
-  width: 100%;
-  background: #4a90e2;
-  transition: height 0.4s ease;
+  bottom: 50%;
+  background: linear-gradient(to top, #00d2ff, #3a7bd5);
+  border-radius: 0 0 48px 48px;
 }
-.cup {
+
+.fill-her {
+  top: 50%;
+  background: linear-gradient(to bottom, #ff00c8, #ff6b9d);
+  border-radius: 48px 48px 0 0;
+}
+
+.heart {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 48px;
+  font-size: 36px;
+  top: 50%;
+  transition: top 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
   z-index: 10;
-  transition: top 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
 }
-.score { font-size: 32px; font-weight: bold; margin: 10px 0; }
-.buttons { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-button {
-  padding: 16px;
-  font-size: 18px;
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.btn {
+  width: 100%;
+  padding: 18px;
   border: none;
-  border-radius: 12px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 600;
   color: white;
-  font-weight: bold;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
 }
-button:active { transform: scale(0.95); }
-#myPoint { background: #4a90e2; }
-#herPoint { background: #ff6b9d; }
-#reset { background: #ff4757; }
-.label { margin: 15px 0 5px; font-size: 16px; opacity: 0.9; }
+
+.btn span {
+  position: relative;
+  z-index: 2;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+  z-index: 1;
+}
+
+.btn:active::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.btn-me {
+  background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+  box-shadow: 0 8px 20px rgba(0, 210, 255, 0.3);
+}
+
+.btn-her {
+  background: linear-gradient(135deg, #ff00c8, #ff6b9d);
+  box-shadow: 0 8px 20px rgba(255, 0, 200, 0.3);
+}
+
+.btn-reset {
+  background: linear-gradient(135deg, #ff4757, #c44569);
+  box-shadow: 0 8px 20px rgba(255, 71, 87, 0.3);
+  font-size: 16px;
+}
